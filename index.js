@@ -28,6 +28,7 @@ app.get('/', (req, res) => {
 // routers api
 const prefix = '/piano/api/v1.0'
 app.use(prefix + '/auth', require('./routes/auth_route'))
+app.use(prefix + '/user', require('./routes/user_route'))
 
 // Socket.IO connection
 io.on('connection', (socket) => {

@@ -14,6 +14,9 @@ exports.getTeachers = async (req, res) => {
     }
     catch (err) {
         console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
     }
 }
 
@@ -41,6 +44,9 @@ exports.getTeacher = async (req, res) => {
     }
     catch (err) {
         console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
     }
 }
 
@@ -63,22 +69,24 @@ exports.updateTeacher = async (req, res) => {
             })
         }
 
-        const protectedPassword = await bcrypt.hash(password, 10)
-        const name = `${firstName} ${lastName}`
+        // Create the $set object only with fields that are provided
+        const updateFields = {};
+        if (username) updateFields.username = username;
+        if (firstName && lastName) updateFields.name = `${firstName} ${lastName}`;
+        if (firstName) updateFields.firstName = firstName;
+        if (lastName) updateFields.lastName = lastName;
+        if (prefix) updateFields.prefix = prefix;
+        if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+        if (email) updateFields.email = email;
+        if (lineId) updateFields.lineId = lineId;
 
-        const teacher = await Teacher.findByIdAndUpdate(id, {
-            $set: {
-                username: username, 
-                password: protectedPassword,
-                name: name,
-                firstName: firstName,
-                lastName: lastName,
-                prefix: prefix,
-                phoneNumber: phoneNumber,
-                email: email,
-                lineId: lineId
-            }
-        })
+        // Handle password update separately
+        if (password) {
+            const protectedPassword = await bcrypt.hash(password, 10);
+            updateFields.password = protectedPassword;
+        }
+
+        const teacher = await Teacher.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
         if (!teacher) {
             return res.status(404).json({
                 message: "ไม่พบ user นี้ในระบบ"
@@ -93,5 +101,38 @@ exports.updateTeacher = async (req, res) => {
     }
     catch (err) {
         console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
+    }
+}
+
+exports.deleteTeacher = async (req, res) => {
+    const { id } = req.params
+    try {
+        if (!id) {
+            return res.status(401).json({
+                message: "กรุณาแนบ _id ของคุณครูมาด้วย"
+            })
+        }
+
+        const result  = await Teacher.findByIdAndDelete(id)
+        if (result.deletedCount === 0) {
+            return res.status(404).json({
+                message: "ไม่พบ user นี้ในระบบ"
+            })
+        }
+
+        return res.status(200).json({
+            message: "success",
+            status: true,
+            data: result.deletedCount
+        })
+    }
+    catch (err) {
+        console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
     }
 }
