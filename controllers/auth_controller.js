@@ -78,12 +78,13 @@ exports.registerTeacher = async (req, res) => {
         prefix,
         phoneNumber,
         email,
-        lineId
+        lineId,
+        school_id
     } = req.body
     try {
-        if (!username || !password || !prefix || !firstName || !lastName) {
+        if (!username || !password || !prefix || !firstName || !lastName || !school_id) {
             return res.status(404).json({
-                message: 'กรุณากรอกข้อมูลให้ครบถ้วน'
+                message: 'username password prefix firstName lastName school_id are requires'
             })
         }
         const existTeacher = await Teacher.findOne({ username: username })
@@ -104,7 +105,8 @@ exports.registerTeacher = async (req, res) => {
             prefix : prefix,
             phoneNumber : phoneNumber,
             email: email,
-            lineId: lineId
+            lineId: lineId,
+            school_id: school_id
         }
         const teacher = new Teacher(newTeacher)
         const savedTeacher = await teacher.save()
@@ -122,7 +124,7 @@ exports.registerTeacher = async (req, res) => {
     }
     catch(err) {
         console.log(err)
-        return resizeBy.status(500).json({
+        return res.status(500).json({
             message: err.message
         })
     }
@@ -152,7 +154,7 @@ exports.registerAdmin = async (req, res) => {
             password : protectedPassword,
             name : username,
         }
-        const admin = new Teacher(newAdmin)
+        const admin = new Admin(newAdmin)
         const savedAdmin = await admin.save()
         if (!savedAdmin) {
             return res.status(500).json({

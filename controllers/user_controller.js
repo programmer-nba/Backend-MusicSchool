@@ -21,7 +21,7 @@ exports.getTeachers = async (req, res) => {
 }
 
 exports.getTeacher = async (req, res) => {
-    const { id } = req.params
+    const { id } = req.query
     try {
         if (!id) {
             return res.status(401).json({
@@ -60,7 +60,8 @@ exports.updateTeacher = async (req, res) => {
         prefix,
         phoneNumber,
         email,
-        lineId
+        lineId,
+        school_id
     } = req.body
     try {
         if (!id) {
@@ -79,6 +80,7 @@ exports.updateTeacher = async (req, res) => {
         if (phoneNumber) updateFields.phoneNumber = phoneNumber;
         if (email) updateFields.email = email;
         if (lineId) updateFields.lineId = lineId;
+        if (school_id) updateFields.school_id = school_id;
 
         // Handle password update separately
         if (password) {
@@ -117,7 +119,7 @@ exports.deleteTeacher = async (req, res) => {
         }
 
         const result  = await Teacher.findByIdAndDelete(id)
-        if (result.deletedCount === 0) {
+        if (!result) {
             return res.status(404).json({
                 message: "ไม่พบ user นี้ในระบบ"
             })

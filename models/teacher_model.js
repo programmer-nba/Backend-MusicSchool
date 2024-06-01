@@ -12,6 +12,7 @@ const teacherSchema = new Schema(
         phoneNumber: { type: String, default: '-' },
         email: { type: String, default: '-' },
         lineId: { type: String, default: '-' },
+        school_id: { type: String, default: '-' },
         active: { type: Boolean, default: true }
     },
     {
