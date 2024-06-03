@@ -21,7 +21,7 @@ exports.getTeachers = async (req, res) => {
 }
 
 exports.getTeacher = async (req, res) => {
-    const { id } = req.query
+    const { id } = req.params
     try {
         if (!id) {
             return res.status(401).json({

@@ -1,6 +1,7 @@
 const School = require('../models/school_model')
 const ClassRoom = require('../models/classRoom_model')
 const Teacher = require('../models/teacher_model')
+const Student = require('../models/student_model')
 
 
 // full -----------------------------------
@@ -325,3 +326,245 @@ exports.deleteClassRoom = async (req, res) => {
         })
     }
 }
+
+// students ----------------------------------
+exports.createStudent = async (req, res) => {
+    const { code, firstName, lastName, prefix, classRoom_id, studentNumber } = req.body
+    try {
+        if (!firstName || !lastName || !prefix || !classRoom_id || !code) {
+            return res.status(400).json({
+                message: 'กรุณาส่งข้อมูลให้ครบ => code, firstName, lastName, prefix, classRoom_id, studentNumber'
+            })
+        }
+        if (!['เด็กชาย', 'เด็กหญิง'].includes(prefix)) {
+            return res.status(400).json({
+                message: 'กรุณาใส่ prefix ให้ถูกต้อง => เด็กชาย, เด็กหญิง'
+            })
+        }
+
+        const existStudent = await Student.findOne({ classRoom_id: classRoom_id, studentNumber: studentNumber })
+        if (existStudent) {
+            return res.status(400).json({
+                message: 'นักเรียนเลขที่นี้มีอยู่ในระบบแล้ว',
+                data: `${existStudent.name} ห้อง ${existStudent.classType}/${existStudent.room} เลขที่ ${existStudent.studentNumber}`
+            })
+        }
+
+        const prefixShort = prefix === 'เด็กชาย' ? 'ด.ช.' : 'ด.ญ.'
+        const name = `${prefixShort}${firstName} ${lastName}`
+        const classRoom = await ClassRoom.findById(classRoom_id)
+        if (!classRoom) {
+            return res.status(404).json({
+                message: 'ไม่พบห้องเรียนนี้ในระบบ'
+            })
+        }
+
+        const school_id = classRoom.school_id
+        const classType = classRoom.classType
+        const room = classRoom.room
+
+        const newStudent = {
+            code: code,
+            name: name,
+            firstName: firstName,
+            lastName: lastName,
+            prefix: prefix,
+            prefixShort: prefixShort,
+            school_id: school_id,
+            classRoom_id: classRoom_id,
+            classType: classType,
+            room: room,
+            studentNumber: studentNumber
+        }
+
+        const student = await Student.create(newStudent)
+        if (!student) {
+            return res.status(500).json({
+                message: "ไม่สามารถบันทึกข้อมูล"
+            })
+        }
+
+        return res.status(200).json({
+            message: "success",
+            status: true,
+            data: student
+        })
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
+    }
+}
+
+exports.updateStudent = async (req, res) => {
+    const { code, firstName, lastName, prefix, classRoom_id, studentNumber, active } = req.body
+    const { id } = req.params
+    try {
+        const existStudent = await Student.findById(id)
+        if (!existStudent) {
+            return res.status(404).json({
+                message: "ไม่พบนักเรียนคนนี้ในระบบ"
+            })
+        }
+
+        if (prefix && !['เด็กชาย', 'เด็กหญิง'].includes(prefix)) {
+            return res.status(400).json({
+                message: "กรุณาใส่ prefix ให้ถูกต้อง => เด็กชาย, เด็กหญิง"
+            })
+        }
+        const prefixShort = prefix ? (prefix === 'เด็กชาย' ? 'ด.ช.' : 'ด.ญ.') : existStudent.prefixShort
+        const name = `${prefixShort}${firstName || existStudent.firstName} ${lastName || existStudent.lastName}`
+
+        let school_id = null
+        let classType = null
+        let room = null
+
+        if (classRoom_id) {
+            const classRoom = await ClassRoom.findById(classRoom_id)
+            if (!classRoom) {
+                return res.status(404).json({
+                    message: 'ไม่พบห้องเรียนนี้ในระบบ'
+                })
+            }
+            const existedStudent = await Student.findOne({ classRoom_id: classRoom_id, studentNumber: studentNumber })
+            if (existedStudent && existedStudent.studentNumber !== existStudent.studentNumber) {
+                return res.status(400).json({
+                    message: 'นักเรียนเลขที่นี้มีอยู่ในระบบแล้ว',
+                    data: `${existedStudent.name} ห้อง ${existedStudent.classType}/${existedStudent.room} เลขที่ ${existedStudent.studentNumber}`
+                })
+            }
+            school_id = classRoom.school_id
+            classType = classRoom.classType
+            room = classRoom.room
+        } else {
+            const existedStudent = await Student.findOne({ classRoom_id: existStudent.classRoom_id, studentNumber: existStudent.studentNumber })
+            if (existedStudent && existedStudent.studentNumber !== existStudent.studentNumber) {
+                return res.status(400).json({
+                    message: 'นักเรียนเลขที่นี้มีอยู่ในระบบแล้ว',
+                    data: `${existedStudent.name} ห้อง ${existedStudent.classType}/${existedStudent.room} เลขที่ ${existedStudent.studentNumber}`
+                })
+            }
+            school_id = existStudent.school_id
+            classType = existStudent.classType
+            room = existStudent.room
+        }
+
+        const student = await Student.findByIdAndUpdate(id, {
+            $set: {
+                code: code,
+                name: name,
+                firstName: firstName,
+                lastName: lastName,
+                prefix: prefix,
+                prefixShort: prefixShort,
+                school_id: school_id,
+                classRoom_id: classRoom_id,
+                classType: classType,
+                room: room,
+                studentNumber: studentNumber,
+                active: active
+            }
+        }, { new: true })
+        if (!student) {
+            return res.status(500).json({
+                message: "ไม่สามารถบันทึกข้อมูล"
+            })
+        }
+
+        return res.status(200).json({
+            message: "success",
+            status: true,
+            data: student
+        })
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json({
+            message: err.message
+        })
+    }
+}
+
+exports.getStudentsOfClassRoom = async (req, res) => {
+    const { classRoom_id } = req.params
+    try {
+        const classRoom = await ClassRoom.findById(classRoom_id)
+        if (!classRoom) {
+            return res.status(404).json({
+                message: 'ไม่พบห้องเรียนนี้ในระบบ'
+            })
+        }
+        const students = await Student.find({ classRoom_id: classRoom._id.toString() }).select('-__v')
+
+        return res.status(200).json({
+            message: `ห้อง ${classRoom.classType}/${classRoom.room} มีนักเรียน ${students.length} คน`,
+            status: true,
+            data: students
+        })
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json(
+            {
+                message: err.message
+            }
+        )
+    }
+}
+
+exports.getStudent = async (req, res) => {
+    const { id } = req.params
+    try {
+        const student = await Student.findById(id).select('-__v')
+        if (!student) {
+            return res.status(404).json({
+                message: 'ไม่พบนักเรียนคนนี้ในระบบ'
+            })
+        }
+
+        return res.status(200).json({
+            message: `success`,
+            status: true,
+            data: student
+        })
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json(
+            {
+                message: err.message
+            }
+        )
+    }
+}
+
+exports.deleteStudent = async (req, res) => {
+    const { id } = req.params
+    try {
+        const student = await Student.findByIdAndDelete(id)
+        if (!student) {
+            return res.status(404).json({
+                message: 'ไม่พบนักเรียนคนนี้ในระบบ'
+            })
+        }
+
+        return res.status(200).json({
+            message: `success`,
+            status: true,
+            data: student.deletedCount
+        })
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json(
+            {
+                message: err.message
+            }
+        )
+    }
+}
+
+
+
