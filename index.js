@@ -36,15 +36,26 @@ app.use(prefix + '/settings', require('./routes/settings/settings_route')) // sc
 io.on('connection', (socket) => {
     console.log('A client connected.');
 
-    // Example socket event
-    socket.on('example', (data) => {
-        console.log('Received data:', data);
+    // Handle incoming offer from sender
+    socket.on('offer', (offer) => {
+        console.log('Received offer from sender:', offer);
+        // Broadcast the offer to all other clients (potential receivers)
+        socket.broadcast.emit('offer', offer);
     });
 
-    // Example sending data to client
-    setInterval(() => {
-        socket.emit('message', 'Hello from server!');
-    }, 5000);
+    // Handle incoming answer from receiver
+    socket.on('answer', (answer) => {
+        console.log('Received answer from receiver:', answer);
+        // Broadcast the answer to all other clients (potential senders)
+        socket.broadcast.emit('answer', answer);
+    });
+
+    // Handle incoming ICE candidate from sender or receiver
+    socket.on('icecandidate', (candidate) => {
+        console.log('Received ICE candidate:', candidate);
+        // Broadcast the ICE candidate to all other clients
+        socket.broadcast.emit('icecandidate', candidate);
+    });
 
     socket.on('disconnect', () => {
         console.log('A client disconnected.');
