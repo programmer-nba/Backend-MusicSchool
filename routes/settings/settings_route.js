@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const School = require('../../controllers/school_controller')
+const Song = require('../../controllers/song_controller')
 const { authAdmin, authAny } = require('../../middlewares/authorization')
 
 router.get('/:school_id/full-class', authAny, School.getFullClassRoom)
@@ -21,5 +22,11 @@ router.get('/:classRoom_id/students', authAny, School.getStudentsOfClassRoom)
 router.get('/student/:id', authAny, School.getStudent)
 router.put('/student/:id', authAny, School.updateStudent)
 router.delete('/student/:id', authAdmin, School.deleteStudent)
+
+router.post('/note', authAdmin, Song.createNote)
+router.put('/note/:id', authAdmin, Song.updateNote)
+router.get('/notes', authAny, Song.getNotes)
+router.get('/note/:id', authAny, Song.getNote)
+router.delete('/note/:id', authAdmin, Song.deleteNote)
 
 module.exports = router
