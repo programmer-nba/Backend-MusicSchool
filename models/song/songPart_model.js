@@ -3,11 +3,8 @@ const { Schema } = mongoose
 
 const songPartSchema = new Schema(
     {
-        songId: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: 'Song', 
-            require: true 
-        },
+        songName: { type: String, require: true },
+        songFileName: { type: String },
         part: { type: Number, require: true },
         keys: { type: Array, default: [] }
     },

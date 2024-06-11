@@ -1,4 +1,3 @@
-const Song = require('../models/song/song_model')
 const Note = require('../models/song/note_model')
 const SongPart = require('../models/song/songPart_model')
 
@@ -131,154 +130,19 @@ exports.deleteNote = async (req, res) => {
     }
 }
 
-// song
-exports.createSong = async (req, res) => {
-    try {
-        const { songName } = req.body
-        const song = await Song.create({
-            songName: songName
-        })
-        if (!song) {
-            return res.status(400).json({
-                message: 'can not create song!'
-            })
-        }
-
-        return res.status(200).json({
-            message: 'success!',
-            status: true,
-            data: song
-        })
-        
-    }
-    catch(err) {
-        console.log(err)
-        return res.status(500).json({
-            message: err.message
-        })
-    }
-}
-
-exports.updateSong = async (req, res) => {
-    try {
-        const { songName } = req.body
-        const { id } = req.params
-        const song = await Song.findByIdAndUpdate(id, {
-            $set: {
-                songName: songName
-            }
-        }, { new : true })
-        if (!song) {
-            return res.status(404).json({
-                message: 'song not found'
-            })
-        }
-
-        return res.status(200).json({
-            message: 'success!',
-            status: true,
-            data: song
-        })
-        
-    }
-    catch(err) {
-        console.log(err)
-        return res.status(500).json({
-            message: err.message
-        })
-    }
-}
-
-exports.getSongs = async (req, res) => {
-    try {
-        const songs = await Song.find()
-
-        return res.status(200).json({
-            message: `have ${songs.length} songs`,
-            status: true,
-            data: songs
-        })
-        
-    }
-    catch(err) {
-        console.log(err)
-        return res.status(500).json({
-            message: err.message
-        })
-    }
-}
-
-exports.getSong = async (req, res) => {
-    try {
-        const { id } = req.params
-        const song = await Song.findById(id)
-        if (!song) {
-            return res.status(404).json({
-                message: "song not found!"
-            })
-        }
-
-        return res.status(200).json({
-            message: `success`,
-            status: true,
-            data: song
-        })
-        
-    }
-    catch(err) {
-        console.log(err)
-        return res.status(500).json({
-            message: err.message
-        })
-    }
-}
-
-exports.deleteSong = async (req, res) => {
-    try {
-        const { id } = req.params
-        const songParts = await SongPart.deleteMany({songId: id})
-        const song = await Song.deleteOne({_id: id})
-        if (!song) {
-            return res.status(404).json({
-                message: "song not found!"
-            })
-        }
-
-        return res.status(200).json({
-            message: `success`,
-            status: true,
-            data: {
-                song: song.deletedCount,
-                songParts: songParts.deletedCount
-            }
-        })
-        
-    }
-    catch(err) {
-        console.log(err)
-        return res.status(500).json({
-            message: err.message
-        })
-    }
-}
-
 // songPart
 exports.createSongPart = async (req, res) => {
     try {
-        const { songId, part, keys } = req.body
-        if (!songId || !part) {
+        const { songName, songFileName, part, keys } = req.body
+        if (!songName || !part) {
             return res.status(400).json({
-                message: "songId and part are require!"
+                message: "songName and part are require!"
             })
         }
-        const existSong = await Song.findById(songId)
-        if (!existSong) {
-            return res.status(404).json({
-                message: "song not found"
-            })
-        }
+        
         const songPart = await SongPart.create({
-            songId: songId,
+            songName: songName,
+            songFileName: songFileName,
             part: part,
             keys: keys
         })
@@ -305,7 +169,7 @@ exports.createSongPart = async (req, res) => {
 
 exports.updateSongPart = async (req, res) => {
     try {
-        const { part, keys } = req.body
+        const { songName, songFileName, part, keys } = req.body
         const { id } = req.params
         if (!id) {
             return res.status(400).json({
@@ -314,6 +178,8 @@ exports.updateSongPart = async (req, res) => {
         }
         const songPart = await SongPart.findByIdAndUpdate(id, {
             $set: {
+                songName: songName,
+                songFileName: songFileName,
                 part: part,
                 keys: keys
             }
@@ -384,8 +250,7 @@ exports.updateSongPartKey = async (req, res) => {
 
 exports.getSongParts = async (req, res) => {
     try {
-        const { songId } = req.params
-        const songParts = await SongPart.find({songId:songId })
+        const songParts = await SongPart.find()
 
         return res.status(200).json({
             message: `have ${songParts.length} parts`,
