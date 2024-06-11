@@ -3,7 +3,6 @@ const ClassRoom = require('../models/classRoom_model')
 const Teacher = require('../models/teacher_model')
 const Student = require('../models/student_model')
 
-
 // full -----------------------------------
 exports.getFullClassRoom = async (req, res) => {
     const { school_id } = req.params
@@ -260,10 +259,9 @@ exports.updateClassRoom = async (req, res) => {
     }
 }
 
-exports.getClassRoomsOfSchool = async (req, res) => {
-    const { school_id } = req.params
+exports.getClassRooms = async (req, res) => {
     try {
-        const classRooms = await ClassRoom.find({ school_id: school_id })
+        const classRooms = await ClassRoom.find()
 
         return res.status(200).json({
             message: `มีห้องเรียน ${classRooms.length} ห้อง`,
@@ -487,19 +485,12 @@ exports.updateStudent = async (req, res) => {
     }
 }
 
-exports.getStudentsOfClassRoom = async (req, res) => {
-    const { classRoom_id } = req.params
+exports.getStudents = async (req, res) => {
     try {
-        const classRoom = await ClassRoom.findById(classRoom_id)
-        if (!classRoom) {
-            return res.status(404).json({
-                message: 'ไม่พบห้องเรียนนี้ในระบบ'
-            })
-        }
-        const students = await Student.find({ classRoom_id: classRoom._id.toString() }).select('-__v')
+        const students = await Student.find().select('-__v')
 
         return res.status(200).json({
-            message: `ห้อง ${classRoom.classType}/${classRoom.room} มีนักเรียน ${students.length} คน`,
+            message: `มีนักเรียน ${students.length} คน`,
             status: true,
             data: students
         })
