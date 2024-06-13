@@ -2,13 +2,20 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const http = require('http')
-const socketIo = require('socket.io')
+const { Server } = require('socket.io')
 const mongoose = require('mongoose')
 require('dotenv').config();
 
 const app = express()
 const server = http.createServer(app)
-const io = socketIo(server)
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow all origins (you can specify a specific origin instead)
+        methods: ["GET", "POST"], // Allow specific HTTP methods
+        allowedHeaders: ["Content-Type"], // Allow specific headers
+        credentials: true // Allow credentials
+    }
+});
 
 // Middleware
 app.use(cors());
